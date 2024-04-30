@@ -6,6 +6,7 @@
 #include <string>
 #include <cmath>
 #include <algorithm>
+#include <sstream>
 
 #include "Helpers.h"
 #include "ZoneMapper.h"
@@ -109,6 +110,17 @@ namespace ImGui {
          * @return Указатель на толщину кривой.
          */
         float* GetThickness() { return &thickness; }
+        /**
+         * Преобразует кривую в строку.
+         * @return Строка содержащая сериализованную кривую.
+         */
+        std::string Serialize() const;
+        /**
+         * Преобразует строку в кривую.
+         * @param data Данные кривой.
+         * @return Десериализованная кривая.
+         */
+        static DraggableBezierCurve Deserialize(const std::string& data);
     private:
         ImU32 color; ///< Цвет кривой.
         float thickness; ///< Толщина кривой.
@@ -120,7 +132,7 @@ namespace ImGui {
          * @param cp1 Ссылка на первую контрольную точку, которая должна быть рассчитана.
          * @param cp2 Ссылка на вторую контрольную точку, которая должна быть рассчитана.
          */
-        void CalculateControlPoints(size_t i, ImVec2& cp1, ImVec2& cp2);
+        void DraggableBezierCurve::CalculateControlPoints(size_t i, ImVec2& cp1, ImVec2& cp2);
 
         const float increment = 0.05f; ///< Приращение, используемое для выборки кривой Безье.
 

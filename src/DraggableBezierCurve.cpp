@@ -143,7 +143,6 @@ namespace ImGui {
         return -1;
     }
 
-
     bool DraggableBezierCurve::onSegment(ImVec2 p, ImVec2 q, ImVec2 r) {
         return q.x <= std::max(p.x, r.x) && q.x >= std::min(p.x, r.x) && q.y <= std::max(p.y, r.y) && q.y >= std::min(p.y, r.y);
     }
@@ -178,5 +177,39 @@ namespace ImGui {
         if (o4 == 0 && onSegment(p2, q1, q2)) return true;
 
         return false;
+    }
+
+    std::string DraggableBezierCurve::Serialize() const {
+        std::ostringstream stream;
+        stream << isClosed << "," << thickness << "," << color;
+        for (DraggableDot dot : points) {
+            stream << "," << dot.GetSimplePosition().x << "," << dot.GetSimplePosition().y
+                << "," << *dot.GetRadius() << "," << *dot.GetColor();
+        }
+        return stream.str();
+    }
+
+    DraggableBezierCurve DraggableBezierCurve::Deserialize(const std::string& data) {
+        std::istringstream stream(data);
+        std::string segment;
+        std::vector<std::string> seglist;
+
+        while (std::getline(stream, segment, ',')) {
+            seglist.push_back(segment);
+        }
+
+        DraggableBezierCurve curve(
+            std::stoi(seglist[0]),
+            std::stof(seglist[1]),
+            static_cast<ImU32>(std::stoul(seglist[2])));
+
+        for (size_t i = 3; i < seglist.size(); i += 4) {
+            ImVec2 pos(std::stoi(seglist[i]), std::stoi(seglist[i + 1]));
+            float rad = std::stof(seglist[i + 2]);
+            ImU32 col = static_cast<ImU32>(std::stoul(seglist[i + 3]));
+            curve.points.emplace_back(pos, rad, col);
+        }
+
+        return curve;
     }
 }

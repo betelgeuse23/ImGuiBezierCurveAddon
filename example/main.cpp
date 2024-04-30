@@ -4,6 +4,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <stdio.h>
+#include <fstream>
 
 #include "DraggableBezierCurve.h"
 
@@ -23,6 +24,42 @@
  */
 void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+/**
+ * @brief Функция предназначенная для загрузки состояния кривых в файл
+ * @param filename Имя файла сохранения.
+ * @param bezierCurves Массив кривых.
+ */
+void SaveCurvesToFile(const std::string& filename, std::vector<ImGui::DraggableBezierCurve>& bezierCurves) {
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        for (const auto& curve : bezierCurves) {
+            file << curve.Serialize() << std::endl;
+        }
+        file.close();
+    }
+}
+/**
+ * @brief Функция предназначенная для загрузки состояния кривых из файла
+ * @param filename Имя файла сохранения.
+ * @param bezierCurves Массив кривых.
+ */
+void LoadCurvesFromFile(const std::string& filename, std::vector<ImGui::DraggableBezierCurve>& bezierCurves) {
+    std::vector<ImGui::DraggableBezierCurve> tempCurves;
+    std::ifstream file(filename);
+    std::string line;
+    if (file.is_open()) {
+        while (getline(file, line)) {
+            if (!line.empty()) {
+                tempCurves.push_back(ImGui::DraggableBezierCurve::Deserialize(line));
+            }
+        }
+        file.close();
+    }
+    if (!tempCurves.empty()) {
+        bezierCurves.swap(tempCurves);
+        tempCurves.clear();
+    }
 }
 
 /**
@@ -72,6 +109,26 @@ int main() {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("Save", "CTRL+S")) {
+                    SaveCurvesToFile("curves.txt", bezierCurves);
+                }
+                if (ImGui::MenuItem("Load", "CTRL+L")) {
+                    LoadCurvesFromFile("curves.txt", bezierCurves);
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }
+
+        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_S)) && ImGui::GetIO().KeyCtrl) {
+            SaveCurvesToFile("curves.txt", bezierCurves);
+        }
+        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_L)) && ImGui::GetIO().KeyCtrl) {
+            LoadCurvesFromFile("curves.txt", bezierCurves);
+        }
 
         ImGui::Begin("Bezier Curve Editor");
 
